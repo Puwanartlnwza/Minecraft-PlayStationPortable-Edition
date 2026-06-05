@@ -28,9 +28,14 @@ jobs:
         run: |
           cmake --build build -j$(nproc)
 
+      - name: Prepare Release
+        run: |
+          mkdir release
+          cp build/EBOOT.PBP release/
+          cp -r res release/
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MinecraftPSP
-          path: |
-            build/EBOOT.PBP
+          path: release/
