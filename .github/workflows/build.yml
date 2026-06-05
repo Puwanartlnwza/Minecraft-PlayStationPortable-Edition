@@ -1,4 +1,4 @@
-name: Build Minecraft PSP
+name: Build PSP
 
 on:
   workflow_dispatch:
@@ -11,56 +11,27 @@ jobs:
       image: pspdev/pspdev:latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Tool Versions
+      - name: Verify PSP SDK
         run: |
-          psp-config --version || true
-          psp-gcc --version
-          cmake --version
-          make --version
-
+          psp-config --pspdev-path
+          psp-config --pspsdk-path
+      - name: Configure
+        run: |
+          cmake \
+            -B build \
+            -DCMAKE_TOOLCHAIN_FILE=.cmake/psp.cmake
       - name: Build
         run: |
-          make
-
-      - name: Inspect Build Output
+          cmake --build build -j$(nproc)
+      - name: Prepare Release
         run: |
-          echo "===== BUILD DIRECTORY ====="
-          ls -lah build
-
-          echo ""
-          echo "===== FILE SIZES ====="
-          ls -lh build/EBOOT.PBP
-          ls -lh build/MinecraftPSP
-
-      - name: Locate PSP Tools
-        run: |
-          echo "===== PSP TOOLS ====="
-          which psp-readelf || true
-          which psp-objdump || true
-          which psp-strip || true
-          which pack-pbp || true
-
-      - name: Inspect ELF
-        run: |
-          if command -v psp-readelf >/dev/null 2>&1; then
-            echo "===== ELF HEADER ====="
-            psp-readelf -h build/MinecraftPSP
-          fi
-
-      - name: Check PBP Header
-        run: |
-          echo "===== PBP HEADER ====="
-          od -An -tx1 -N16 build/EBOOT.PBP
-
-      - name: Dump SFO
-        run: |
-          strings build/PARAM.SFO
-
-      - name: Upload Build Folder
+          mkdir release
+          cp build/EBOOT.PBP release/
+          cp -r res release/
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MinecraftPSP
-          path: build/
+          path: release/
