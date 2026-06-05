@@ -55,6 +55,10 @@ jobs:
           echo "===== PBP HEADER ====="
           od -An -tx1 -N16 build/EBOOT.PBP
 
+      - name: Dump SFO
+        run: |
+          strings build/PARAM.SFO
+
       - name: Upload Build Folder
         uses: actions/upload-artifact@v4
         with:
