@@ -2,43 +2,21 @@ name: Build PSP
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    container:
+      image: pspdev/pspdev:latest
+
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install build tools
+      - name: Verify PSP SDK
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            cmake \
-            git \
-            python3
-
-      - name: Clone PSPDEV
-        run: |
-          git clone --depth=1 https://github.com/pspdev/pspdev.git
-
-      - name: Build PSP Toolchain
-        run: |
-          cd pspdev
-          chmod +x build-all.sh
-          ./build-all.sh
-
-      - name: Setup Environment
-        run: |
-          echo "PSPDEV=/usr/local/pspdev" >> $GITHUB_ENV
-          echo "PSPSDK=/usr/local/pspdev/psp/sdk" >> $GITHUB_ENV
-          echo "/usr/local/pspdev/bin" >> $GITHUB_PATH
+          psp-config --pspdev-path
+          psp-config --pspsdk-path
 
       - name: Configure
         run: |
@@ -50,10 +28,9 @@ jobs:
         run: |
           cmake --build build -j$(nproc)
 
-      - name: Upload EBOOT
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MinecraftPSP
           path: |
             build/EBOOT.PBP
-            res/**
