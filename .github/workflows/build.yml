@@ -29,6 +29,12 @@ jobs:
         run: |
           make
 
+      - name: Inspect Files
+        run: |
+          ls -lh build
+          file build/MinecraftPSP || true
+          file build/*.elf || true
+
       - name: Show Build Output
         run: |
           ls -lah build
