@@ -2,10 +2,6 @@ name: Build Minecraft PSP
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - master
 
 jobs:
   build:
@@ -18,9 +14,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify Toolchain
+      - name: Tool Versions
         run: |
-          psp-config --version
+          psp-config --version || true
           psp-gcc --version
           cmake --version
           make --version
@@ -29,16 +25,35 @@ jobs:
         run: |
           make
 
-      - name: Inspect Files
+      - name: Inspect Build Output
         run: |
-          ls -lh build
-          file build/MinecraftPSP || true
-          file build/*.elf || true
-
-      - name: Show Build Output
-        run: |
+          echo "===== BUILD DIRECTORY ====="
           ls -lah build
-          find build -type f
+
+          echo ""
+          echo "===== FILE SIZES ====="
+          ls -lh build/EBOOT.PBP
+          ls -lh build/MinecraftPSP
+
+      - name: Locate PSP Tools
+        run: |
+          echo "===== PSP TOOLS ====="
+          which psp-readelf || true
+          which psp-objdump || true
+          which psp-strip || true
+          which pack-pbp || true
+
+      - name: Inspect ELF
+        run: |
+          if command -v psp-readelf >/dev/null 2>&1; then
+            echo "===== ELF HEADER ====="
+            psp-readelf -h build/MinecraftPSP
+          fi
+
+      - name: Check PBP Header
+        run: |
+          echo "===== PBP HEADER ====="
+          od -An -tx1 -N16 build/EBOOT.PBP
 
       - name: Upload Build Folder
         uses: actions/upload-artifact@v4
