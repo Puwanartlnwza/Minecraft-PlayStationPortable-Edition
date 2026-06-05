@@ -1,7 +1,11 @@
-name: Build PSP
+name: Build Minecraft PSP
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
 
 jobs:
   build:
@@ -11,31 +15,27 @@ jobs:
       image: pspdev/pspdev:latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Verify PSP SDK
+      - name: Verify Toolchain
         run: |
-          psp-config --pspdev-path
-          psp-config --pspsdk-path
-
-      - name: Configure
-        run: |
-          cmake \
-            -B build \
-            -DCMAKE_TOOLCHAIN_FILE=.cmake/psp.cmake
+          psp-config --version
+          psp-gcc --version
+          cmake --version
+          make --version
 
       - name: Build
         run: |
-          cmake --build build -j$(nproc)
+          make
 
-      - name: Prepare Release
+      - name: Show Build Output
         run: |
-          mkdir release
-          cp build/EBOOT.PBP release/
-          cp -r res release/
+          ls -lah build
+          find build -type f
 
-      - name: Upload Artifact
+      - name: Upload Build Folder
         uses: actions/upload-artifact@v4
         with:
           name: MinecraftPSP
-          path: release/
+          path: build/
